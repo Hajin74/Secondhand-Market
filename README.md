@@ -2,6 +2,8 @@
 - 원티드 6월 챌린지 (주제 : 테스트코드) 요구사항에 맞추었습니다.
 - 테스트 코드 작성을 통해 코드 품질 향상을 목적으로 진행하였습니다.
 
+<br>
+
 ## 요구사항
 <details>
 <summary>1단계</summary>
@@ -38,6 +40,7 @@
 
 </details>
 
+<br>
 
 ## RESTful API
 ▶️ [포스트맨 API 명세서](https://documenter.getpostman.com/view/34589851/2sA3XQfgRh#intro)
