@@ -37,6 +37,8 @@
   |  | 판매 승인 | `IN_RESERVATION` | `APPROVED` |
   |  | 구매 확정 | `SOLD_OUT` | `CONFIRMED` |
 
+<br>
+
 ### 2. 구매 과정(주문 → 승인 → 확정) 도중에 제품의 가격이 바뀐다면?
 - 확정 가격(confirmedPrice)과 상품 가격(price)을 분리한다.
 - 확정 가격은 주문 시점에 결정되고 변경되지 않는다.
@@ -45,91 +47,22 @@
 - 구매 과정 중에 제품 가격이 바뀌더라도 `구매자는 확정 가격으로 구매`하고 `다른 사용자는 변경된 상품 가격을 보기` 때문에 문제가 없다.
 - 확정 가격을 기록함으로써 구매한 용품과 예약중인 용품 목록의 정보에서 구매 당시의 가격도 확인할 수 있다.
 
-### 3. 여러 사용자가 한 제품을 동시에 주문했을 때 정상적으로 작업이 이루어지는가?
-- 문제
-    - 여러 개의 스레드를 만들어 동시에 주문하는 테스트를 진행하였다.
-    - 주문이 여러 개가 되는 동시성 이슈가 발생하였다.
-- 해결
-    - JPA의 @Lock 어노테이션을 사용하였다.
-- DB 수준에서 해당 제품에 비관적 락을 걸어, 하나의 스레드씩만 접근할 수 있도록 처리하였다.
+<br>
 
-▶️[코드 바로 가기](https://documenter.getpostman.com/view/34589851/2sA3XQfgRh#intro)
-```
-   @Lock(value= LockModeType.PESSIMISTIC_WRITE)
-   @Query("select p from Product p where p.id = :id")
-   Product findByWithPessimisticLock(final Long id);
-   
-   public OrderResponse orderProduct(Long userId, OrderCreateRequest request) {
-       ...
-       Product product = productRepository.findByWithPessimisticLock(request.getProductId());
-       ...
-   }
-   ```
+### 3. 여러 사용자가 한 제품을 동시에 주문했을 때 정상적으로 작업이 이루어지는가?
+#### 문제
+- 여러 개의 스레드를 만들어 동시에 주문하는 테스트를 진행하였다.
+- 주문이 여러 개가 되는 동시성 이슈가 발생하였다.
+- [코드 바로 가기](https://github.com/Hajin74/Secondhand-Market/blob/feature%2Fhajin/src/test/java/org/example/market/service/OrderMultiThreadTest.java)
+#### 해결
+- DB 수준에서 해당 제품에 비관적 락을 걸어, 하나의 스레드씩만 접근할 수 있도록 처리하였다.
+- JPA의 @Lock 어노테이션을 사용하였다.
+- [코드 바로 가기](https://github.com/Hajin74/Secondhand-Market/blob/feature/hajin/src/main/java/org/example/market/repository/jpa/ProductJpaRepository.java)
+
+<br>
 
 ### 4. 상세조회 로직이 회원여부와 당사자 여부에 따라서 달라진다.
 - Controller에서 회원여부를 (Token 여부) 확인한다.
 - 비회원일 경우, 그냥 상세 조회 결과를 반환한다.
 - 회원일 경우, 거래내역을 포함한 상세 조회 결과를 반환한다. 
-
-▶️[코드 바로 가기](https://documenter.getpostman.com/view/34589851/2sA3XQfgRh#intro)
-
-
-   controller
-   ```
-   public ApiResponse getDetailProduct(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long productId) {
-       log.info("제품 상세 조회 api");
-   
-       try {
-           if (customUserDetails != null) {
-               String username = customUserDetails.getUsername();
-               Long userId = userRepository.findByUsername(username).getId();
-               return new DataResponse<>(productService.findDetailProductWithTransaction(userId, productId));
-           }
-           return new DataResponse<>(productService.findDetailProduct(productId));
-       } catch (CustomException exception) {
-           return new ErrorResponse(exception.getErrorCode(), exception.getMessage());
-       }
-   }
-   ```
-
-   service
-   ```
-   /* 제품 상세 조회 without 거래내역 */
-   @Transactional(readOnly = true)
-   public ProductResponse findDetailProduct(Long productId) {
-       Product findProduct = productRepository.findById(productId).orElseThrow(
-               () ->  new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
-   
-       return ProductResponse.from(findProduct);
-   }
-   
-   /* 제품 상세 조회 with 거래내역 */
-   @Transactional(readOnly = true)
-   public ProductDetailResponse findDetailProductWithTransaction(Long userId, Long productId) {
-       Product findProduct = productRepository.findById(productId).orElseThrow(
-               () ->   new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
-   
-       List<TransactionResponse> transactionList = new ArrayList<>();
-   
-       List<Order> orders = orderRepository.findAllByProductId(productId);
-       for(Order order : orders) {
-           if (order.getSeller().getId().equals(userId) || order.getBuyer().getId().equals(userId)) {
-               transactionList.add(TransactionResponse.from(order));
-           }
-       }
-   
-       return ProductDetailResponse.builder()
-               .product(ProductResponse.from(findProduct))
-               .transactions(transactionList)
-               .build();
-   }
-   ```
-
-
-
-
-
-
-
-
-
+- [코드 바로 가기](https://github.com/Hajin74/Secondhand-Market/blob/feature/hajin/src/main/java/org/example/market/service/ProductService.java)
