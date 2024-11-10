@@ -1,16 +1,30 @@
-## 원티드 프리온보딩 챌린지 백엔드 20 사전과제
+# 중고마켓
 
-### API
-- 명세서 : https://documenter.getpostman.com/view/34589851/2sA3XQfgRh#intro
-<img width="298" alt="api" src="https://github.com/Hajin74/wanted-preonboarding-challenge-backend-20/assets/67518596/8a024434-a46b-4e70-819f-ace3216dc76e">
+## RESTful API
+▶️ [포스트맨 API 명세서](https://documenter.getpostman.com/view/34589851/2sA3XQfgRh#intro)
+| **HTTP 메서드** | **URL**             | **설명**              |
+|-----------------|----------------------|------------------------|
+| POST            | `/api/user/join`     | 회원가입 |
+| POST            | `/login`             | 로그인 |
+| POST            | `/api/product`       | 제품 등록 |
+| GET             | `/api/product`       | 제품 전체 조회 |
+| GET             | `/api/product/{productId}`  | 제품 상세 조회  |
+| GET             | `/api/product/completed`    | 구매한 제품 조회 |
+| GET             | `/api/product/reserved`     | 예약 중인 제품 조회 |
+| GET             | `/api/product/me`    | 내가 등록한 제품 조회 |
+| PATCH           | `/api/product/{price}`    | 제품 가격 수정 |
+| POST            | `/api/order`    | 제품 주문 |
+| GET             | `/api/order/me`    | 내 거래내역 조회 |
+| PATCH           | `/api/order/(orderId}/approve`    | 주문 승인 |
+| PATCH           | `/api/order/(orderId}/confirm`    | 구매 확정 |
 <br>
 
-### 고민
+## 고민했던 것들
 
-1. 상세조회 로직이 회원여부와 당사자 여부에 따라서 달라진다.
-   - 컨트롤러에서 비회원인지(token이 null) 회원인지(token이 존재) 확인한다.
-   - 비회원일 경우, 그냥 상세 조회 결과를 반환한다.
-   - 회원일 경우, 거래내역을 포함한 상세 조회 결과를 반환한다.
+### 1. 상세조회 로직이 회원여부와 당사자 여부에 따라서 달라진다.
+- Controller에서 비회원인지(token is null) 회원인지(token이 존재) 확인한다.
+- 비회원일 경우, 그냥 상세 조회 결과를 반환한다.
+- 회원일 경우, 거래내역을 포함한 상세 조회 결과를 반환한다.
 
    controller
    ```
